@@ -9,5 +9,5 @@ setup(
     packages=find_packages(include=['alienhouse_employee_hub', 'alienhouse_employee_hub.*']),
     include_package_data=True,
     zip_safe=False,
-    install_requires=[],
+    install_requires=['requests>=2.31.0,<3.0.0'],
 )
