@@ -1,5 +1,5 @@
 name: employee_hub_app
-description: AlienHouse Employee Hub Flutter client
+description: AlienHouse Networks employee operations and team collaboration app
 publish_to: "none"
 version: 0.1.0+1
 environment:
