@@ -284,6 +284,19 @@ def get_my_leave_applications(limit=50):
 
 
 @frappe.whitelist()
+def get_team_leave_applications(limit=100, status=None):
+    _user()
+    _require_role("HR Manager", "System Manager")
+    filters = {}
+    if status in {"Open", "Approved", "Rejected", "Cancelled"}:
+        filters["status"] = status
+    return frappe.get_list("Leave Application", filters=filters,
+                           fields=["name", "employee", "leave_type", "from_date", "to_date",
+                                   "total_leave_days", "status", "docstatus", "description", "posting_date"],
+                           order_by="from_date desc", limit_page_length=max(1, min(int(limit), 250)))
+
+
+@frappe.whitelist()
 def review_leave_application(name, action, remarks=""):
     _user()
     _require_role("HR Manager", "System Manager")
