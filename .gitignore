@@ -8,3 +8,10 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# IDE and generated Flutter tooling
+**/.idea/
+*.iml
+mobile/employee_hub_app/.packages
+mobile/employee_hub_app/.flutter-plugins
+mobile/employee_hub_app/.flutter-plugins-dependencies

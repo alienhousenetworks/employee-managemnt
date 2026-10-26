@@ -1,0 +1,85 @@
+{
+  "doctype": "DocType",
+  "name": "Employee Hub WhatsApp Message",
+  "module": "Employee Hub",
+  "autoname": "format:WAM-.YYYY.-.#####",
+  "title_field": "employee_name",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "provider_message_id",
+      "label": "Provider Message ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "direction",
+      "label": "Direction",
+      "fieldtype": "Select",
+      "options": "Inbound\nOutbound",
+      "default": "Inbound",
+      "reqd": 1
+    },
+    {
+      "fieldname": "sender_phone",
+      "label": "Sender Phone",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "employee",
+      "label": "Matched Employee",
+      "fieldtype": "Link",
+      "options": "Employee"
+    },
+    {
+      "fieldname": "employee_user",
+      "label": "Employee User",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "employee_name",
+      "label": "Employee Name / Match Status",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "message",
+      "label": "Message",
+      "fieldtype": "Long Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "provider_timestamp",
+      "label": "Provider Timestamp",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Received\nUnmatched\nHandled",
+      "default": "Received",
+      "reqd": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1
+    },
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC"
+}
