@@ -31,6 +31,7 @@ jobs:
           channel: stable
       - run: flutter create . --platforms=android,ios
       - name: Commit generated Android and iOS runners
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feat/')
         shell: bash
         run: |
           git add android ios .metadata
