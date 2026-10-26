@@ -557,8 +557,10 @@ def whatsapp_webhook():
         mode, token, challenge = (frappe.request.args.get("hub.mode"), frappe.request.args.get("hub.verify_token"),
                                   frappe.request.args.get("hub.challenge"))
         if verify_token and mode == "subscribe" and hmac.compare_digest(str(token or ""), str(verify_token)):
-            frappe.local.response["type"] = "text"
-            return challenge or ""
+            frappe.local.response["type"] = "txt"
+            frappe.local.response["doctype"] = "whatsapp-webhook-challenge"
+            frappe.local.response["result"] = challenge or ""
+            return None
         frappe.local.response["http_status_code"] = 403
         return {"ok": False, "error": "Webhook verification failed"}
     app_secret = cfg.get("app_secret")
