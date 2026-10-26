@@ -510,7 +510,10 @@ def send_whatsapp_message(to, message):
     if not re.fullmatch(r"\+?[1-9][0-9]{7,14}", to) or not message or len(message) > 4096:
         frappe.throw(_("Recipient must be an international phone number and message must contain 1–4096 characters"))
     try:
-        response = requests.post("https://graph.facebook.com/v20.0/" + phone_id + "/messages",
+        graph_version = cfg.get("graph_api_version") or "v23.0"
+        if not re.fullmatch(r"v[0-9]+\\.0", graph_version):
+            frappe.throw(_("Invalid WhatsApp Graph API version in server configuration"))
+        response = requests.post("https://graph.facebook.com/" + graph_version + "/" + phone_id + "/messages",
                                  headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
                                  json={"messaging_product": "whatsapp", "to": to, "type": "text",
                                        "text": {"preview_url": False, "body": message}},
@@ -521,6 +524,21 @@ def send_whatsapp_message(to, message):
     except Exception:
         frappe.logger("employee_hub").exception("WhatsApp send failed")
         return {"status": "UNAVAILABLE", "message": "WhatsApp provider request failed."}
+
+
+@frappe.whitelist()
+def send_whatsapp_to_employee(employee, message):
+    _user()
+    _require_role("HR Manager", "System Manager")
+    row = frappe.get_value("Employee", employee, ["name", "employee_name", "cell_number", "status"], as_dict=True)
+    if not row or row.status != "Active":
+        frappe.throw(_("Choose an active Employee record"))
+    if not row.cell_number:
+        frappe.throw(_("This employee does not have a cell number configured"))
+    result = send_whatsapp_message(row.cell_number, message)
+    result["employee"] = row.name
+    result["employee_name"] = row.employee_name
+    return result
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET", "POST"])
