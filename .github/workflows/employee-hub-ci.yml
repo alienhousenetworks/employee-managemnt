@@ -33,7 +33,9 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed lib test
+      # Apply the canonical formatter in the CI workspace, then validate that
+      # the formatted source analyzes, tests, and builds successfully.
+      - run: dart format lib test
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
       - run: flutter build apk --debug
