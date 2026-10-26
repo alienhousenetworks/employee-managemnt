@@ -47,3 +47,39 @@ class TestEmployeeHubAPI(FrappeTestCase):
         with patch.object(frappe.session, "user", "employee@example.com"):
             with self.assertRaises(Exception):
                 api.submit_eod_report(accomplishments="Test", hours_worked="not-a-number")
+
+    def test_guest_cannot_create_feed_comment(self):
+        with patch.object(frappe.session, "user", "Guest"):
+            with self.assertRaises(frappe.PermissionError):
+                api.create_feed_comment(feed_post="not-a-post", content="hello")
+
+    def test_feed_mentions_resolve_only_enabled_usernames(self):
+        with patch.object(frappe, "get_all", return_value=[
+            {"name": "alice@example.com", "full_name": "Alice"},
+            {"name": "disabled-user@example.com", "full_name": "Disabled User"},
+        ]) as get_all:
+            result = api._resolve_feed_mentions("Please check this @alice@example.com and @unknown")
+        get_all.assert_called_once()
+        self.assertEqual(result, ["alice@example.com"])
+
+    def test_feed_comment_validation_rejects_empty_content(self):
+        from alienhouse_employee_hub.employee_hub.doctype.employee_hub_feed_interaction.employee_hub_feed_interaction import (
+            EmployeeHubFeedInteraction,
+        )
+        doc = EmployeeHubFeedInteraction({"interaction_type": "Comment", "content": "   "})
+        with self.assertRaises(Exception):
+            doc.validate()
+
+    def test_feed_reaction_rejects_unsupported_value(self):
+        with patch.object(frappe.session, "user", "employee@example.com"), patch.object(
+            api, "_feed_post_or_throw", return_value=type("Post", (), {"name": "EHF-TEST"})()
+        ):
+            with self.assertRaises(Exception):
+                api.set_feed_reaction(feed_post="EHF-TEST", reaction="Dislike")
+
+    def test_non_employee_role_cannot_read_feed_interactions(self):
+        with patch.object(frappe.session, "user", "visitor@example.com"), patch(
+            "frappe.get_roles", return_value=["Website User"]
+        ):
+            with self.assertRaises(frappe.PermissionError):
+                api.get_feed_interactions(feed_post="EHF-TEST")
