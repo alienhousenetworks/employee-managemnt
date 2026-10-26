@@ -243,8 +243,8 @@ def save_employee(name=None, employee_name=None, user_id=None, department=None, 
         doc.update(values)
         doc.save()
     else:
-        if not company or not date_of_joining or not date_of_birth or gender not in {"Male", "Female", "Other"}:
-            frappe.throw(_("Company, date of joining, date of birth and a valid gender are required to create an Employee record"))
+        if not company or not date_of_joining:
+            frappe.throw(_("Company and date of joining are required. Other required fields are validated by the installed HRMS version."))
         doc = frappe.get_doc({"doctype": "Employee", **values})
         doc.insert()
     return {"name": doc.name, "employee_name": doc.employee_name}
@@ -290,8 +290,15 @@ def record_checkin(log_type="IN", timestamp=None, latitude=None, longitude=None,
         frappe.throw(_("The latest check-in event is already {0}").format(log_type))
     doc = frappe.get_doc({"doctype": "Employee Checkin", "employee": employee.name, "time": stamp,
                           "log_type": log_type, "device_id": (device_id or "employee-hub")[:140]})
-    if latitude not in (None, "") and longitude not in (None, ""):
-        lat, lon = float(latitude), float(longitude)
+    has_latitude = latitude not in (None, "")
+    has_longitude = longitude not in (None, "")
+    if has_latitude != has_longitude:
+        frappe.throw(_("Latitude and longitude must be supplied together"))
+    if has_latitude and has_longitude:
+        try:
+            lat, lon = float(latitude), float(longitude)
+        except (TypeError, ValueError):
+            frappe.throw(_("GPS coordinates must be numeric"))
         if not -90 <= lat <= 90 or not -180 <= lon <= 180:
             frappe.throw(_("Invalid GPS coordinates"))
         doc.latitude, doc.longitude = lat, lon
@@ -351,13 +358,12 @@ def review_leave_application(name, action, remarks=""):
     doc = frappe.get_doc("Leave Application", name)
     if doc.docstatus != 0:
         frappe.throw(_("Only draft leave applications can be reviewed"))
-    if action == "approve":
-        doc.status = "Approved"
-        doc.save()
-        doc.submit()
-    else:
-        doc.status = "Rejected"
-        doc.save()
+    # HRMS Leave Application is submittable and its native on_submit hook
+    # requires Approved or Rejected status. Submit both decisions so they are
+    # recorded through the native document lifecycle rather than left as drafts.
+    doc.status = "Approved" if action == "approve" else "Rejected"
+    doc.save()
+    doc.submit()
     if remarks:
         doc.add_comment("Comment", text=(remarks or "")[:2000])
     return {"name": doc.name, "status": doc.status, "docstatus": doc.docstatus}
