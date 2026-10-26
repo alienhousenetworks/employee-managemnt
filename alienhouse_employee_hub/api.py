@@ -213,7 +213,7 @@ def get_attendance_history(limit=30):
     user = _user()
     employee = _employee_name(user)
     count = max(1, min(int(limit), 100))
-    attendance = frappe.get_list("Attendance", filters={"employee": employee.name},
+    attendance = frappe.get_all("Attendance", filters={"employee": employee.name},
                                   fields=["name", "attendance_date", "status", "shift", "in_time", "out_time",
                                           "working_hours", "late_entry", "early_exit"],
                                   order_by="attendance_date desc", limit_page_length=count)
@@ -276,7 +276,7 @@ def apply_leave(leave_type, from_date, to_date, description, half_day=0):
 def get_my_leave_applications(limit=50):
     user = _user()
     employee = _employee_name(user)
-    return frappe.get_list("Leave Application", filters={"employee": employee.name},
+    return frappe.get_all("Leave Application", filters={"employee": employee.name},
                            fields=["name", "leave_type", "from_date", "to_date", "total_leave_days", "status",
                                    "docstatus", "description", "posting_date"],
                            order_by="from_date desc", limit_page_length=max(1, min(int(limit), 100)))
@@ -306,14 +306,17 @@ def review_leave_application(name, action, remarks=""):
 @frappe.whitelist()
 def get_my_tasks(limit=50):
     user = _user()
-    rows = frappe.get_list("Task", filters={"status": ["not in", ["Completed", "Cancelled"]]},
-                           fields=["name", "subject", "status", "priority", "exp_start_date", "exp_end_date",
-                                   "project", "owner", "modified"],
-                           order_by="modified desc", limit_page_length=max(1, min(int(limit), 100)))
+    count = max(1, min(int(limit), 100))
+    owned = frappe.get_all("Task", filters={"owner": user, "status": ["not in", ["Completed", "Cancelled"]]},
+                           fields=["name"])
     assigned = frappe.get_all("ToDo", filters={"allocated_to": user, "status": "Open", "reference_type": "Task"},
                               fields=["reference_name"])
-    allowed = {x.reference_name for x in assigned}
-    return [r for r in rows if r.get("owner") == user or r.get("name") in allowed]
+    names = list({x.name for x in owned} | {x.reference_name for x in assigned if x.reference_name})
+    if not names:
+        return []
+    return frappe.get_all("Task", filters={"name": ["in", names]},
+                          fields=["name", "subject", "status", "priority", "exp_start_date", "exp_end_date",
+                                  "project", "owner", "modified"], order_by="modified desc", limit_page_length=count)
 
 
 @frappe.whitelist()
@@ -331,7 +334,7 @@ def create_task(subject, description="", assigned_to=None, priority="Medium", ex
     doc = frappe.get_doc({"doctype": "Task", "subject": subject.strip(), "description": (description or "")[:5000],
                           "status": "Open", "priority": priority,
                           "exp_end_date": _date(exp_end_date).isoformat() if exp_end_date else None})
-    doc.insert()
+    doc.insert(ignore_permissions=True)
     frappe.get_doc({"doctype": "ToDo", "allocated_to": assigned_to, "reference_type": "Task",
                     "reference_name": doc.name, "description": subject.strip(), "status": "Open"}).insert(ignore_permissions=True)
     return {"name": doc.name, "subject": doc.subject, "assigned_to": assigned_to}
@@ -347,7 +350,7 @@ def update_task_status(name, status):
     if doc.owner != user and not assigned and not _is_hr():
         frappe.throw(_("You are not assigned to this task"), frappe.PermissionError)
     doc.status = status
-    doc.save()
+    doc.save(ignore_permissions=True)
     return {"name": doc.name, "status": doc.status}
 
 
