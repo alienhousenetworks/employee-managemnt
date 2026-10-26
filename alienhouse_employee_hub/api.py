@@ -180,7 +180,7 @@ def get_employee_directory(limit=100, search=None, department=None):
 
 @frappe.whitelist()
 def save_employee(name=None, employee_name=None, user_id=None, department=None, designation=None,
-                  company=None, status="Active", date_of_joining=None, reports_to=None,
+                  company=None, status="Active", date_of_joining=None, date_of_birth=None, gender=None, reports_to=None,
                   cell_number=None, prefered_email=None):
     _user()
     _require_role("HR Manager", "System Manager")
@@ -193,17 +193,17 @@ def save_employee(name=None, employee_name=None, user_id=None, department=None, 
               "user_id": user_id or None, "department": department or None,
               "designation": designation or None, "company": company or None, "status": status,
               "date_of_joining": _date(date_of_joining).isoformat() if date_of_joining else None,
-              "reports_to": reports_to or None, "cell_number": cell_number or None,
+              "date_of_birth": _date(date_of_birth).isoformat() if date_of_birth else None,
+              "gender": gender or None, "reports_to": reports_to or None, "cell_number": cell_number or None,
               "prefered_email": prefered_email or None}
     if name:
         doc = frappe.get_doc("Employee", name)
         doc.update(values)
         doc.save()
     else:
-        if not company or not date_of_joining:
-            frappe.throw(_("Company and date of joining are required to create an Employee record"))
-        doc = frappe.get_doc({"doctype": "Employee", "gender": "Other",
-                              "date_of_birth": _date(date_of_joining).isoformat(), **values})
+        if not company or not date_of_joining or not date_of_birth or gender not in {"Male", "Female", "Other"}:
+            frappe.throw(_("Company, date of joining, date of birth and a valid gender are required to create an Employee record"))
+        doc = frappe.get_doc({"doctype": "Employee", **values})
         doc.insert()
     return {"name": doc.name, "employee_name": doc.employee_name}
 
