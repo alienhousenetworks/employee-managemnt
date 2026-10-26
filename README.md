@@ -9,7 +9,7 @@ Features: authenticated team feed, daily EOD reports, report history, reviewer s
 - Flutter: `mobile/employee_hub_app/`
 - `erpnext-develop/` is an upstream snapshot, not the custom app.
 
-This monorepo is not directly installable by `bench get-app` without packaging the Frappe app as a dedicated repository/build artifact. On a compatible staging bench, install the packaged app, run migrations/build and run its test suite.
+The repository root includes packaging metadata for the custom app. On a compatible staging bench use `bench get-app alienhouse_employee_hub https://github.com/alienhousenetworks/employee-managemnt.git --branch feat/employee-hub-backend-frontend-flutter`, then `bench --site your-site install-app alienhouse_employee_hub`, `bench --site your-site migrate`, `bench build`, and `bench --site your-site run-tests --app alienhouse_employee_hub`. Because the repository also contains a large upstream ERPNext snapshot, verify packaging and app discovery on a clean staging bench before production.
 
 Web: `cd web && npm install && npm run dev`; copy `.env.example` to `.env.local` and set `VITE_FRAPPE_URL` to your HTTPS ERPNext origin. Flutter: `cd mobile/employee_hub_app && flutter pub get && flutter run`.
 
