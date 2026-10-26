@@ -188,7 +188,9 @@ def save_employee(name=None, employee_name=None, user_id=None, department=None, 
         frappe.throw(_("Invalid employee status"))
     if not (employee_name or "").strip():
         frappe.throw(_("Employee name is required"))
-    values = {"employee_name": employee_name.strip(), "user_id": user_id or None, "department": department or None,
+    parts = employee_name.strip().split()
+    values = {"first_name": parts[0], "last_name": " ".join(parts[1:]) or None,
+              "user_id": user_id or None, "department": department or None,
               "designation": designation or None, "company": company or None, "status": status,
               "date_of_joining": _date(date_of_joining).isoformat() if date_of_joining else None,
               "reports_to": reports_to or None, "cell_number": cell_number or None,
@@ -198,9 +200,10 @@ def save_employee(name=None, employee_name=None, user_id=None, department=None, 
         doc.update(values)
         doc.save()
     else:
-        if not company:
-            frappe.throw(_("Company is required to create an Employee record"))
-        doc = frappe.get_doc({"doctype": "Employee", **values})
+        if not company or not date_of_joining:
+            frappe.throw(_("Company and date of joining are required to create an Employee record"))
+        doc = frappe.get_doc({"doctype": "Employee", "gender": "Other",
+                              "date_of_birth": _date(date_of_joining).isoformat(), **values})
         doc.insert()
     return {"name": doc.name, "employee_name": doc.employee_name}
 
@@ -209,10 +212,21 @@ def save_employee(name=None, employee_name=None, user_id=None, department=None, 
 def get_attendance_history(limit=30):
     user = _user()
     employee = _employee_name(user)
-    return frappe.get_list("Attendance", filters={"employee": employee.name},
-                           fields=["name", "attendance_date", "status", "shift", "in_time", "out_time",
-                                   "working_hours", "late_entry", "early_exit"],
-                           order_by="attendance_date desc", limit_page_length=max(1, min(int(limit), 100)))
+    count = max(1, min(int(limit), 100))
+    attendance = frappe.get_list("Attendance", filters={"employee": employee.name},
+                                  fields=["name", "attendance_date", "status", "shift", "in_time", "out_time",
+                                          "working_hours", "late_entry", "early_exit"],
+                                  order_by="attendance_date desc", limit_page_length=count)
+    for row in attendance:
+        row["record_type"] = "Attendance"
+    checkins = frappe.get_all("Employee Checkin", filters={"employee": employee.name},
+                              fields=["name", "time", "log_type", "device_id"], order_by="time desc",
+                              limit_page_length=count)
+    for row in checkins:
+        row["record_type"] = "Check-in event"
+        row["status"] = row.get("log_type")
+    combined = attendance + checkins
+    return sorted(combined, key=lambda row: str(row.get("time") or row.get("attendance_date") or ""), reverse=True)[:count]
 
 
 @frappe.whitelist()
