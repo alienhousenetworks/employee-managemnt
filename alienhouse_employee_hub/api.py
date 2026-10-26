@@ -648,7 +648,7 @@ def _feed_post_or_throw(name):
 
 def _resolve_feed_mentions(content):
     """Resolve @user mentions to enabled Frappe users without trusting client IDs."""
-    tokens = {token.lower() for token in re.findall(r"(?<![\\w@])@([A-Za-z0-9_.+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}|[A-Za-z0-9_.-]{1,140})", content or "")}
+    tokens = {token.lower() for token in re.findall(r"(?<![\w@])@([A-Za-z0-9_.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|[A-Za-z0-9_.-]{1,140})", content or "")}
     if not tokens:
         return []
     users = frappe.get_all("User", filters={"enabled": 1}, fields=["name", "full_name"], limit_page_length=1000)
