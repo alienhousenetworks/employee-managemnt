@@ -181,6 +181,43 @@ def get_employee_directory(limit=100, search=None, department=None):
 
 
 @frappe.whitelist()
+def get_employee_workspace(employee=None):
+    user = _user()
+    if employee:
+        profile = frappe.get_doc("Employee", employee)
+        if profile.user_id != user:
+            _require_role("HR Manager", "System Manager")
+    else:
+        own = _employee_name(user)
+        profile = frappe.get_doc("Employee", own.name)
+    linked_user = profile.user_id
+    if not linked_user and not _is_hr():
+        frappe.throw(_("Your Employee record is not linked to a user"), frappe.PermissionError)
+    eod = frappe.get_all("Employee Hub EOD Report", filters={"employee_user": linked_user},
+                         fields=["name", "report_date", "accomplishments", "status", "hours_worked"],
+                         order_by="report_date desc", limit_page_length=15)
+    attendance = frappe.get_all("Attendance", filters={"employee": profile.name},
+                                fields=["name", "attendance_date", "status", "working_hours"],
+                                order_by="attendance_date desc", limit_page_length=15)
+    leaves = frappe.get_all("Leave Application", filters={"employee": profile.name},
+                            fields=["name", "leave_type", "from_date", "to_date", "status"],
+                            order_by="from_date desc", limit_page_length=15)
+    todo = frappe.get_all("ToDo", filters={"allocated_to": linked_user, "reference_type": "Task", "status": "Open"},
+                          fields=["reference_name"], limit_page_length=100) if linked_user else []
+    task_names = [row.reference_name for row in todo if row.reference_name]
+    tasks = frappe.get_all("Task", filters={"name": ["in", task_names]}, fields=["name", "subject", "status", "priority", "exp_end_date"],
+                           limit_page_length=100) if task_names else []
+    documents = frappe.get_all("Employee Hub Document Request", filters={"employee": profile.name},
+                               fields=["name", "document_type", "status", "requested_on"],
+                               order_by="creation desc", limit_page_length=15)
+    return {"employee": {"name": profile.name, "employee_name": profile.employee_name, "user_id": profile.user_id,
+                         "department": profile.department, "designation": profile.designation, "company": profile.company,
+                         "status": profile.status, "date_of_joining": profile.date_of_joining, "reports_to": profile.reports_to},
+            "eod_reports": eod, "attendance": attendance, "leave_applications": leaves, "tasks": tasks,
+            "document_requests": documents}
+
+
+@frappe.whitelist()
 def save_employee(name=None, employee_name=None, user_id=None, department=None, designation=None,
                   company=None, status="Active", date_of_joining=None, date_of_birth=None, gender=None, reports_to=None,
                   cell_number=None, prefered_email=None):
@@ -253,7 +290,7 @@ def record_checkin(log_type="IN", timestamp=None, latitude=None, longitude=None,
         if not -90 <= lat <= 90 or not -180 <= lon <= 180:
             frappe.throw(_("Invalid GPS coordinates"))
         doc.latitude, doc.longitude = lat, lon
-    doc.insert()
+    doc.insert(ignore_permissions=True)
     return {"name": doc.name, "employee": employee.name, "log_type": log_type, "time": str(doc.time)}
 
 
