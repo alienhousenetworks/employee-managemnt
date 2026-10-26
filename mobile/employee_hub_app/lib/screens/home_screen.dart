@@ -13,20 +13,20 @@ class _HomeScreenState extends State<HomeScreen> {
   int tab = 0;
   bool busy = false;
   String error = '';
-  List<dynamic> posts = [], reports = [], tasks = [], attendance = [], leaves = [], documents = [];
+  List<dynamic> posts = [], reports = [], tasks = [], attendance = [], leaves = [], documents = [], employees = [], inbox = [];
   final post = TextEditingController(), accomp = TextEditingController(), blockers = TextEditingController(),
       plan = TextEditingController(), hours = TextEditingController(text: '8'), taskTitle = TextEditingController(),
       taskDescription = TextEditingController(), leaveReason = TextEditingController(), leaveType = TextEditingController(text: 'Casual Leave'),
       leaveFrom = TextEditingController(), leaveTo = TextEditingController(), docType = TextEditingController(text: 'Employment letter'),
       docPurpose = TextEditingController(), aiPrompt = TextEditingController(text: 'Help me summarise my workday and suggest three priorities for tomorrow.'),
-      aiContext = TextEditingController();
+      aiContext = TextEditingController(), waTo = TextEditingController(), waMessage = TextEditingController();
   String type = 'Update', priority = 'Medium', aiResult = '';
   @override
   void initState() { super.initState(); refresh(); }
   @override
   void dispose() {
     for (final c in [post, accomp, blockers, plan, hours, taskTitle, taskDescription, leaveReason, leaveType,
-      leaveFrom, leaveTo, docType, docPurpose, aiPrompt, aiContext]) { c.dispose(); }
+      leaveFrom, leaveTo, docType, docPurpose, aiPrompt, aiContext, waTo, waMessage]) { c.dispose(); }
     super.dispose();
   }
   Future<dynamic> call(String method, [Map<String, String> args = const {}]) => widget.api.call(method, args);
@@ -35,12 +35,12 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final results = await Future.wait([
         call('get_feed'), call('get_my_eod_reports'), call('get_my_tasks'),
-        call('get_attendance_history'), call('get_my_leave_applications'), call('get_document_requests')
+        call('get_attendance_history'), call('get_my_leave_applications'), call('get_document_requests'), call('get_employee_directory')
       ]);
       if (mounted) setState(() {
         posts = results[0] as List<dynamic>; reports = results[1] as List<dynamic>;
         tasks = results[2] as List<dynamic>; attendance = results[3] as List<dynamic>;
-        leaves = results[4] as List<dynamic>; documents = results[5] as List<dynamic>;
+        leaves = results[4] as List<dynamic>; documents = results[5] as List<dynamic>; employees = results[6] as List<dynamic>; if (tab == 9) inbox = await call('get_whatsapp_inbox') as List<dynamic>;
       });
     } catch (e) { if (mounted) setState(() { error = e.toString(); }); }
     finally { if (mounted) setState(() { busy = false; }); }
@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   @override
   Widget build(BuildContext context) {
-    final titles = ['Team feed', 'Daily EOD', 'Tasks', 'Attendance', 'Leave', 'Documents', 'Dashboard', 'AI assistant'];
+    final titles = ['Team feed', 'Daily EOD', 'Tasks', 'Attendance', 'Leave', 'Documents', 'Dashboard', 'AI assistant', 'Employees', 'WhatsApp'];
     return Scaffold(
       appBar: AppBar(title: Text(titles[tab]), actions: [IconButton(onPressed: refresh, icon: const Icon(Icons.refresh))]),
       body: RefreshIndicator(onRefresh: refresh, child: ListView(padding: const EdgeInsets.all(14), children: [
@@ -132,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
           metric('Attendance records', attendance.length), metric('Leave requests', leaves.length), metric('Document requests', documents.length),
           const Text('These are returned-record counts, not company-wide totals.', style: TextStyle(fontSize: 11))
         ])),
-        if (tab == 7) ...[
+        if (tab == 8) ...[panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Employee directory', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),const Text('Directory fields depend on your ERPNext role.'),const SizedBox(height: 8),rows(employees, ['employee_name','department','designation','status'])]))],\n        if (tab == 9) ...[panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('WhatsApp Business', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),field('Recipient phone number (international format)',waTo),field('Message',waMessage,lines:3),FilledButton(onPressed:()=>act('send_whatsapp_message',{'to':waTo.text,'message':waMessage.text},success:'WhatsApp provider request processed.'),child:const Text('Send message')),const Text('HR/System Manager only. Provider configuration is required.',style:TextStyle(fontSize:11))])),rows(inbox, ['employee_name','sender_phone','message','status','creation'])],\n        if (tab == 7) ...[
           panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text('Human-in-the-loop work assistant', style: TextStyle(fontWeight: FontWeight.bold)),
             field('Request', aiPrompt, lines: 3), field('Context (avoid unnecessary sensitive data)', aiContext, lines: 4),
@@ -155,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(icon:Icon(Icons.event_available),label:'Leave'),
           NavigationDestination(icon:Icon(Icons.folder),label:'Docs'),
           NavigationDestination(icon:Icon(Icons.insights),label:'Dashboard'),
-          NavigationDestination(icon:Icon(Icons.auto_awesome),label:'AI'),
+          NavigationDestination(icon:Icon(Icons.auto_awesome),label:'AI'),\n          NavigationDestination(icon:Icon(Icons.badge),label:'People'),\n          NavigationDestination(icon:Icon(Icons.chat),label:'WhatsApp'),
         ]),
     );
   }
