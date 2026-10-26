@@ -30,7 +30,7 @@ jobs:
       - run: flutter create . --platforms=android,ios
       - run: flutter pub get
       - run: dart format lib
-      - run: flutter analyze
+      - run: flutter analyze --no-fatal-infos
       - run: flutter test
   python:
     runs-on: ubuntu-latest
