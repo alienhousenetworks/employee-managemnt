@@ -1,6 +1,6 @@
 name: Employee Hub CI
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: employee-hub-${{ github.ref }}
   cancel-in-progress: true
@@ -32,22 +32,10 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - run: flutter create . --platforms=android,ios
-      - name: Commit generated Android and iOS runners
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feat/')
-        shell: bash
-        run: |
-          git add -A .
-          if ! git diff --cached --quiet; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'chore: add generated Flutter platform runners [skip ci]'
-            git fetch origin "${GITHUB_REF_NAME}"
-            git rebase "origin/${GITHUB_REF_NAME}"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
       - run: flutter pub get
-      - run: dart format lib
+      # Apply the canonical formatter in the CI workspace, then validate that
+      # the formatted source analyzes, tests, and builds successfully.
+      - run: dart format lib test
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
       - run: flutter build apk --debug
