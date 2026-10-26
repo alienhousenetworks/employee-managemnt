@@ -99,7 +99,10 @@ def create_feed_post(content, post_type="Update"):
 def submit_eod_report(report_date=None, accomplishments=None, blockers=None, next_day_plan=None, hours_worked=0):
     user = _user()
     day = _date(report_date)
-    hours = float(hours_worked or 0)
+    try:
+        hours = float(hours_worked or 0)
+    except (ValueError, TypeError):
+        frappe.throw(_('Hours worked must be a number between 0 and 24'))
     if day > date.today():
         frappe.throw(_("A report cannot be submitted for a future date"))
     if not 0 <= hours <= 24:
@@ -274,6 +277,8 @@ def record_checkin(log_type="IN", timestamp=None, latitude=None, longitude=None,
     employee = _employee_name()
     if log_type not in {"IN", "OUT"}:
         frappe.throw(_("Log type must be IN or OUT"))
+    if timestamp and not _is_hr():
+        frappe.throw(_("Only HR may backdate or override a check-in timestamp"), frappe.PermissionError)
     stamp = now_datetime() if not timestamp else frappe.utils.get_datetime(timestamp)
     if stamp > now_datetime():
         frappe.throw(_("Check-in cannot be in the future"))
@@ -303,9 +308,12 @@ def apply_leave(leave_type, from_date, to_date, description, half_day=0):
         frappe.throw(_("End date must not be before start date"))
     if not (description or "").strip():
         frappe.throw(_("Leave reason is required"))
+    half_day_value = int(half_day or 0)
+    if half_day_value not in {0, 1}:
+        frappe.throw(_("Half day must be either 0 or 1"))
     doc = frappe.get_doc({"doctype": "Leave Application", "employee": employee.name, "leave_type": leave_type,
                           "from_date": start.isoformat(), "to_date": end.isoformat(),
-                          "description": description.strip()[:5000], "half_day": int(half_day or 0),
+                          "description": description.strip()[:5000], "half_day": half_day_value,
                           "status": "Open"})
     doc.insert()
     return {"name": doc.name, "status": doc.status}
