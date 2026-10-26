@@ -22,15 +22,17 @@ This is an employee operations foundation built on ERPNext's existing Employee, 
 - `alienhouse_employee_hub/`: custom Frappe app, APIs, DocTypes and tests.
 - `web/`: React + TypeScript + Vite.
 - `mobile/employee_hub_app/`: Flutter client with committed Android and iOS platform runners.
-- `erpnext-develop/`: upstream ERPNext source snapshot; it is not the custom app.
+- `erpnext-develop/`: vendored upstream ERPNext source snapshot for inspection/reference; it is not a Frappe bench, is not installed by the custom app, and should not be edited to add Employee Hub features. Keep Employee Hub in the custom app so upstream upgrades remain manageable.
+- `docs/ERPNext_HRMS_INTEGRATION.md`: native DocType ownership, dependency requirements and staging integration gates.
 - `.github/workflows/employee-hub-ci.yml`: web, Flutter and Python syntax CI.
 
 ## Install on a staging ERPNext bench
 
-Use a clean, supported Frappe/ERPNext bench and a dedicated test site. This repository contains a large upstream source snapshot as well as the custom app, so verify package discovery before production.
+Use a clean, supported Frappe + ERPNext + HRMS bench and a dedicated test site. The checked-in `erpnext-develop/` directory is an upstream source snapshot, not a running installation and not the installed app root. The custom Frappe app lives at the repository root. `hooks.py` declares `erpnext` and `hrms` as required apps so an incomplete bench fails fast. Review [the integration guide](docs/ERPNext_HRMS_INTEGRATION.md) before installing.
 
 ```bash
-bench get-app alienhouse_employee_hub https://github.com/alienhousenetworks/employee-managemnt.git --branch feat/employee-hub-backend-frontend-flutter
+bench get-app https://github.com/alienhousenetworks/employee-managemnt.git --branch feat/employee-hub-backend-frontend-flutter
+bench --site your-staging-site list-apps  # verify frappe, erpnext and hrms are installed first
 bench --site your-staging-site install-app alienhouse_employee_hub
 bench --site your-staging-site migrate
 bench build
@@ -106,7 +108,8 @@ Configure the Meta webhook callback as `https://YOUR-ERP-HOST/api/method/alienho
 - AI is a drafting assistant only; it must not make hiring, payroll, leave or disciplinary decisions.
 - Empty/missing integration configuration returns an explicit NOT_CONFIGURED/UNAVAILABLE status. No live AI or WhatsApp success is fabricated.
 - The WhatsApp inbox persists text messages and a marker for non-text messages; media ingestion and employee-to-phone mappings beyond the Employee cell number are not implemented.
-- Leave types, attendance policies, Employee required fields, roles and DocType permissions depend on your installed ERPNext version and site configuration.
+- HRMS is a required separate app; the repository does not currently vendor HRMS source. Leave types, attendance policies, Employee required fields, roles and DocType permissions depend on your installed HRMS version and site configuration.
+- The vendored ERPNext snapshot currently declares Frappe `>=17.0.0-dev,<18.0.0` and Python `>=3.14`; this does not prove the custom app is compatible with every bench. Use matching versions and run the site migration/test gates in the integration guide before rollout.
 
 ## Staging API smoke test
 
