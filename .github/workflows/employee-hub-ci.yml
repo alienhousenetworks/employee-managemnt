@@ -34,7 +34,7 @@ jobs:
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feat/')
         shell: bash
         run: |
-          git add android ios .metadata
+          git add -A .
           if ! git diff --cached --quiet; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
