@@ -162,7 +162,7 @@ def get_employee_directory(limit=100, search=None, department=None):
     _user()
     if _is_hr():
         fields = ["name", "employee_name", "user_id", "department", "designation", "company",
-                  "status", "date_of_joining", "reports_to", "cell_number", "prefered_email"]
+                  "status", "date_of_joining", "date_of_birth", "gender", "reports_to", "cell_number", "prefered_email"]
         filters = {}
         if department:
             filters["department"] = department
