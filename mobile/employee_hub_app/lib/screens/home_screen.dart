@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.api, required this.username});
@@ -70,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final titles = ['Team feed', 'Daily EOD', 'Tasks', 'Attendance', 'Leave', 'Documents', 'Dashboard', 'AI assistant', 'Employees', 'WhatsApp'];
     return Scaffold(
-      appBar: AppBar(title: Text(titles[tab]), actions: [IconButton(onPressed: refresh, icon: const Icon(Icons.refresh))]),
+      appBar: AppBar(title: Text(titles[tab]), actions: [IconButton(onPressed: refresh, icon: const Icon(Icons.refresh)), IconButton(onPressed: () async { await widget.api.logout(); if (!mounted) return; Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false); }, icon: const Icon(Icons.logout), tooltip: 'Sign out')]),
       body: RefreshIndicator(onRefresh: refresh, child: ListView(padding: const EdgeInsets.all(14), children: [
         if (error.isNotEmpty) Padding(padding: const EdgeInsets.all(8), child: Text(error, style: const TextStyle(color: Colors.red))),
         if (tab == 0) ...[
