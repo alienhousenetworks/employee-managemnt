@@ -160,7 +160,8 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(icon:Icon(Icons.folder),label:'Docs'),
           NavigationDestination(icon:Icon(Icons.insights),label:'Dashboard'),
           NavigationDestination(icon:Icon(Icons.auto_awesome),label:'AI'),
-          NavigationDestination(icon:Icon(Icons.badge),label:'People'),\n          NavigationDestination(icon:Icon(Icons.chat),label:'WhatsApp'),
+          NavigationDestination(icon:Icon(Icons.badge),label:'People'),
+          NavigationDestination(icon:Icon(Icons.chat),label:'WhatsApp'),
         ]),
     );
   }
