@@ -1,0 +1,76 @@
+{
+  "doctype": "DocType",
+  "name": "Employee Hub Feed Post",
+  "module": "Employee Hub",
+  "autoname": "format:EHF-.YYYY.-.#####",
+  "title_field": "author_name",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "author",
+      "label": "Author User",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "author_name",
+      "label": "Author",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "department",
+      "label": "Department",
+      "fieldtype": "Link",
+      "options": "Department"
+    },
+    {
+      "fieldname": "content",
+      "label": "Post",
+      "fieldtype": "Text Editor",
+      "reqd": 1
+    },
+    {
+      "fieldname": "post_type",
+      "label": "Type",
+      "fieldtype": "Select",
+      "options": "Update\\nQuestion\\nRecognition\\nAnnouncement",
+      "default": "Update",
+      "reqd": 1
+    },
+    {
+      "fieldname": "visibility",
+      "label": "Visibility",
+      "fieldtype": "Select",
+      "options": "Company",
+      "default": "Company",
+      "reqd": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "Employee",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "if_owner": 1
+    },
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC"
+}
