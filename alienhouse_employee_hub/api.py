@@ -643,7 +643,11 @@ def mark_whatsapp_message_handled(name):
 def _feed_post_or_throw(name):
     if not frappe.db.exists("Employee Hub Feed Post", name):
         frappe.throw(_("Feed post not found"))
-    return frappe.get_doc("Employee Hub Feed Post", name)
+    post = frappe.get_doc("Employee Hub Feed Post", name)
+    post.check_permission("read")
+    if post.visibility != "Company":
+        frappe.throw(_("This feed post is not available"), frappe.PermissionError)
+    return post
 
 
 def _resolve_feed_mentions(content):
@@ -658,6 +662,7 @@ def _resolve_feed_mentions(content):
 @frappe.whitelist()
 def get_feed_interactions(feed_post, limit=100):
     _user()
+    _require_role("Employee", "HR Manager", "System Manager")
     _feed_post_or_throw(feed_post)
     try:
         limit = max(1, min(int(limit), 250))
@@ -685,6 +690,7 @@ def get_feed_interactions(feed_post, limit=100):
 @frappe.whitelist()
 def create_feed_comment(feed_post, content, parent_interaction=None):
     user = _user()
+    _require_role("Employee", "HR Manager", "System Manager")
     post = _feed_post_or_throw(feed_post)
     content = (content or "").strip()
     if not content or len(content) > 3000:
@@ -727,6 +733,7 @@ def create_feed_comment(feed_post, content, parent_interaction=None):
 @frappe.whitelist()
 def set_feed_reaction(feed_post, reaction):
     user = _user()
+    _require_role("Employee", "HR Manager", "System Manager")
     post = _feed_post_or_throw(feed_post)
     allowed = {"Like", "Love", "Celebrate", "Support", "Insightful"}
     if reaction not in allowed:
@@ -762,7 +769,9 @@ def set_feed_reaction(feed_post, reaction):
 @frappe.whitelist()
 def delete_feed_comment(name):
     user = _user()
+    _require_role("Employee", "HR Manager", "System Manager")
     doc = frappe.get_doc("Employee Hub Feed Interaction", name)
+    _feed_post_or_throw(doc.feed_post)
     if doc.interaction_type != "Comment":
         frappe.throw(_("Only comments can be deleted"))
     if doc.author != user and not _is_hr():
