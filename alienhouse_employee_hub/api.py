@@ -58,6 +58,7 @@ def get_dashboard():
     employee = _employee(user)
     return {
         "employee": employee,
+        "is_hr": _is_hr(),
         "feed_posts_today": frappe.db.count("Employee Hub Feed Post", {"owner": user, "creation": [">=", today()]}),
         "my_reports_today": frappe.db.count("Employee Hub EOD Report", {"employee_user": user, "report_date": today()}),
         "pending_reports": frappe.db.count("Employee Hub EOD Report", {"status": "Submitted"}) if _is_hr() else None,
