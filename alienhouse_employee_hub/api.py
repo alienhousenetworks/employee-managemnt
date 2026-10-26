@@ -637,3 +637,135 @@ def mark_whatsapp_message_handled(name):
     doc.status = "Handled"
     doc.save()
     return {"name": doc.name, "status": doc.status}
+
+
+
+def _feed_post_or_throw(name):
+    if not frappe.db.exists("Employee Hub Feed Post", name):
+        frappe.throw(_("Feed post not found"))
+    return frappe.get_doc("Employee Hub Feed Post", name)
+
+
+def _resolve_feed_mentions(content):
+    """Resolve @user mentions to enabled Frappe users without trusting client IDs."""
+    tokens = {token.lower() for token in re.findall(r"(?<![\w@])@([A-Za-z0-9_.-]{1,140})", content or "")}
+    if not tokens:
+        return []
+    users = frappe.get_all("User", filters={"enabled": 1}, fields=["name", "full_name"], limit_page_length=1000)
+    return [u["name"] for u in users if u.get("name", "").lower() in tokens]
+
+
+@frappe.whitelist()
+def get_feed_interactions(feed_post, limit=100):
+    _user()
+    _feed_post_or_throw(feed_post)
+    try:
+        limit = max(1, min(int(limit), 250))
+    except (TypeError, ValueError):
+        frappe.throw(_("Limit must be a number"))
+    rows = frappe.get_all(
+        "Employee Hub Feed Interaction",
+        filters={"feed_post": feed_post},
+        fields=["name", "feed_post", "interaction_type", "content", "reaction", "parent_interaction",
+                "author", "author_name", "creation", "mentioned_users"],
+        order_by="creation asc",
+        limit_page_length=limit,
+    )
+    result = []
+    for row in rows:
+        item = dict(row)
+        try:
+            item["mentioned_users"] = json.loads(item.get("mentioned_users") or "[]")
+        except (TypeError, json.JSONDecodeError):
+            item["mentioned_users"] = []
+        result.append(item)
+    return result
+
+
+@frappe.whitelist()
+def create_feed_comment(feed_post, content, parent_interaction=None):
+    user = _user()
+    post = _feed_post_or_throw(feed_post)
+    content = (content or "").strip()
+    if not content or len(content) > 3000:
+        frappe.throw(_("Comment must contain 1–3000 characters"))
+    if parent_interaction:
+        parent = frappe.get_doc("Employee Hub Feed Interaction", parent_interaction)
+        if parent.feed_post != post.name or parent.interaction_type != "Comment":
+            frappe.throw(_("Replies must target a comment on this post"))
+    employee = _employee(user)
+    mentioned_users = _resolve_feed_mentions(content)
+    doc = frappe.get_doc({
+        "doctype": "Employee Hub Feed Interaction",
+        "feed_post": post.name,
+        "interaction_type": "Comment",
+        "content": content,
+        "parent_interaction": parent_interaction,
+        "author": user,
+        "author_name": employee.employee_name if employee else user,
+        "mentioned_users": json.dumps(mentioned_users),
+    })
+    doc.insert()
+    # Mention notifications are best-effort; a notification failure must not lose a comment.
+    for mentioned_user in mentioned_users:
+        if mentioned_user == user:
+            continue
+        try:
+            frappe.get_doc({
+                "doctype": "Notification Log",
+                "subject": _("{0} mentioned you in an Employee Hub feed comment").format(doc.author_name),
+                "for_user": mentioned_user,
+                "type": "Alert",
+                "document_type": "Employee Hub Feed Post",
+                "document_name": post.name,
+            }).insert(ignore_permissions=True)
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), "Employee Hub mention notification failed")
+    return {"name": doc.name, "feed_post": post.name, "mentioned_users": mentioned_users}
+
+
+@frappe.whitelist()
+def set_feed_reaction(feed_post, reaction):
+    user = _user()
+    post = _feed_post_or_throw(feed_post)
+    allowed = {"Like", "Love", "Celebrate", "Support", "Insightful"}
+    if reaction not in allowed:
+        frappe.throw(_("Choose a supported reaction"))
+    existing = frappe.get_all(
+        "Employee Hub Feed Interaction",
+        filters={"feed_post": post.name, "author": user, "interaction_type": "Reaction"},
+        fields=["name", "reaction"],
+        limit_page_length=1,
+    )
+    if existing and existing[0].get("reaction") == reaction:
+        doc = frappe.get_doc("Employee Hub Feed Interaction", existing[0]["name"])
+        doc.delete(ignore_permissions=True)
+        return {"feed_post": post.name, "reaction": None, "active": False}
+    if existing:
+        doc = frappe.get_doc("Employee Hub Feed Interaction", existing[0]["name"])
+        doc.reaction = reaction
+        doc.save(ignore_permissions=True)
+    else:
+        employee = _employee(user)
+        doc = frappe.get_doc({
+            "doctype": "Employee Hub Feed Interaction",
+            "feed_post": post.name,
+            "interaction_type": "Reaction",
+            "reaction": reaction,
+            "author": user,
+            "author_name": employee.employee_name if employee else user,
+        })
+        doc.insert()
+    return {"feed_post": post.name, "reaction": reaction, "active": True}
+
+
+@frappe.whitelist()
+def delete_feed_comment(name):
+    user = _user()
+    doc = frappe.get_doc("Employee Hub Feed Interaction", name)
+    if doc.interaction_type != "Comment":
+        frappe.throw(_("Only comments can be deleted"))
+    if doc.author != user and not _is_hr():
+        frappe.throw(_("You can delete only your own comments"), frappe.PermissionError)
+    doc.delete(ignore_permissions=True)
+    return {"name": name, "deleted": True}
