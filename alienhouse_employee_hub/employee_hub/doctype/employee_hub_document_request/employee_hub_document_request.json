@@ -61,7 +61,8 @@
     {
       "role": "Employee",
       "read": 1,
-      "create": 1
+      "create": 1,
+      "if_owner": 1
     },
     {
       "role": "HR Manager",
