@@ -1,4 +1,6 @@
 name: Employee Hub CI
+permissions:
+  contents: write
 on:
   push:
     branches: [main, 'feat/**']
@@ -28,10 +30,21 @@ jobs:
         with:
           channel: stable
       - run: flutter create . --platforms=android,ios
+      - name: Commit generated Android and iOS runners
+        shell: bash
+        run: |
+          git add android ios .metadata
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'chore: add generated Flutter platform runners [skip ci]'
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
       - run: flutter pub get
       - run: dart format lib
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
+      - run: flutter build apk --debug
   python:
     runs-on: ubuntu-latest
     steps:
