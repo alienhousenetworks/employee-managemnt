@@ -57,6 +57,17 @@ class ApiClient {
     return client;
   }
 
+  Future<void> logout() async {
+    final headers = <String, String>{'Cookie': cookie, 'Content-Type': 'application/x-www-form-urlencoded'};
+    if (csrfToken.isNotEmpty) headers['X-Frappe-CSRF-Token'] = csrfToken;
+    try {
+      await http.post(Uri.parse('$baseUrl/api/method/logout'), headers: headers)
+          .timeout(const Duration(seconds: 10));
+    } finally {
+      current = null;
+    }
+  }
+
   Future<dynamic> call(String method, [Map<String, String> args = const {}]) async {
     final headers = <String, String>{
       'Cookie': cookie,
