@@ -511,7 +511,7 @@ def send_whatsapp_message(to, message):
         frappe.throw(_("Recipient must be an international phone number and message must contain 1–4096 characters"))
     try:
         graph_version = cfg.get("graph_api_version") or "v23.0"
-        if not re.fullmatch(r"v[0-9]+\\.0", graph_version):
+        if not re.fullmatch(r"v[0-9]+\.0", graph_version):
             frappe.throw(_("Invalid WhatsApp Graph API version in server configuration"))
         response = requests.post("https://graph.facebook.com/" + graph_version + "/" + phone_id + "/messages",
                                  headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
