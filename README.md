@@ -108,9 +108,25 @@ Configure the Meta webhook callback as `https://YOUR-ERP-HOST/api/method/alienho
 - The WhatsApp inbox persists text messages and a marker for non-text messages; media ingestion and employee-to-phone mappings beyond the Employee cell number are not implemented.
 - Leave types, attendance policies, Employee required fields, roles and DocType permissions depend on your installed ERPNext version and site configuration.
 
+## Staging API smoke test
+
+After installing the app on a disposable staging site and linking an Employee record to the test user's ERPNext account, run the read-only endpoint smoke test:
+
+```bash
+python -m pip install -r requirements.txt
+export ERPNEXT_BASE_URL="https://your-staging-erp.example.com"
+export ERPNEXT_USER="employee-test@example.com"
+read -s ERPNEXT_PASSWORD
+export ERPNEXT_PASSWORD
+python scripts/smoke_test_employee_hub.py
+unset ERPNEXT_PASSWORD
+```
+
+The script logs in and checks the self-service endpoints without creating business records. Use a dedicated test account and never put passwords in shell history, CI logs or Git. It does not replace role-based negative tests, real Meta webhook tests or the site-specific Frappe test suite.
+
 ## CI and release gates
 
-GitHub Actions runs the web TypeScript/Vite build, Flutter formatting/analyzer/widget test, Android debug APK build, and Python syntax compilation. Platform runner generation is retained in Git. These CI checks are not a substitute for testing on a real supported Frappe/ERPNext site.
+GitHub Actions runs the web TypeScript/Vite build, Flutter formatting/analyzer/widget test, Android debug APK build, and Python syntax compilation. Platform runner files are committed. The read-only staging smoke test can be run against a configured ERPNext site. These CI checks are not a substitute for testing on a real supported Frappe/ERPNext site.
 
 Before production:
 1. Run migrations and Frappe tests on a disposable staging site.
