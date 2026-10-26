@@ -1,0 +1,82 @@
+{
+  "doctype": "DocType",
+  "name": "Employee Hub Document Request",
+  "module": "Employee Hub",
+  "autoname": "format:EDR-.YYYY.-.#####",
+  "title_field": "document_type",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "requested_by",
+      "label": "Requested By",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "employee",
+      "label": "Employee",
+      "fieldtype": "Link",
+      "options": "Employee"
+    },
+    {
+      "fieldname": "document_type",
+      "label": "Document Type",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "purpose",
+      "label": "Purpose",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Requested\nIn Progress\nReady\nRejected",
+      "default": "Requested",
+      "reqd": 1
+    },
+    {
+      "fieldname": "requested_on",
+      "label": "Requested On",
+      "fieldtype": "Date",
+      "default": "Today",
+      "read_only": 1
+    },
+    {
+      "fieldname": "reviewer_notes",
+      "label": "Reviewer Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "attachment",
+      "label": "Attachment",
+      "fieldtype": "Attach"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "Employee",
+      "read": 1,
+      "create": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1
+    },
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC"
+}
