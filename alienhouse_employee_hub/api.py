@@ -14,11 +14,11 @@ def _employee(user):
     return rows[0] if rows else None
 
 def _reviewer():
-    if not set(frappe.get_roles(frappe.session.user)).intersection({'HR Manager','System Manager','Employee Hub Reviewer'}): frappe.throw(_('Reviewer role required'),frappe.PermissionError)
+    if not set(frappe.get_roles(frappe.session.user)).intersection({'HR Manager','System Manager',}): frappe.throw(_('Reviewer role required'),frappe.PermissionError)
 
 @frappe.whitelist()
 def get_dashboard():
-    user=_user(); reviewer=bool(set(frappe.get_roles(user)).intersection({'HR Manager','System Manager','Employee Hub Reviewer'}))
+    user=_user(); reviewer=bool(set(frappe.get_roles(user)).intersection({'HR Manager','System Manager',}))
     return {'employee':_employee(user),'feed_posts_today':frappe.db.count('Employee Hub Feed Post',{'owner':user,'creation':['>=',today()]}),'my_reports_today':frappe.db.count('Employee Hub EOD Report',{'employee_user':user,'report_date':today()}),'pending_reports':frappe.db.count('Employee Hub EOD Report',{'status':'Submitted'}) if reviewer else None,'server_time':str(now_datetime())}
 
 @frappe.whitelist()
