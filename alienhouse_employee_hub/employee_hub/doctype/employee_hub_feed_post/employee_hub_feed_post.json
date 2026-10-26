@@ -53,9 +53,13 @@
     {
       "role": "Employee",
       "read": 1,
+      "create": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
       "create": 1,
-      "write": 1,
-      "if_owner": 1
+      "write": 1
     },
     {
       "role": "System Manager",
@@ -63,12 +67,6 @@
       "create": 1,
       "write": 1,
       "delete": 1
-    },
-    {
-      "role": "HR Manager",
-      "read": 1,
-      "create": 1,
-      "write": 1
     }
   ],
   "sort_field": "creation",
