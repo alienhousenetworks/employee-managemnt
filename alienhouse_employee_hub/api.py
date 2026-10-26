@@ -466,5 +466,56 @@ def whatsapp_webhook():
     except (UnicodeDecodeError, json.JSONDecodeError):
         frappe.local.response["http_status_code"] = 400
         return {"ok": False, "error": "Invalid JSON"}
-    frappe.logger("employee_hub").info("Verified WhatsApp webhook received")
-    return {"ok": True, "received": bool(payload)}
+    saved = 0
+    employees = frappe.get_all("Employee", filters={"status": "Active"},
+                               fields=["name", "employee_name", "cell_number", "user_id"])
+    phone_map = {}
+    for employee in employees:
+        number = "".join(ch for ch in str(employee.get("cell_number") or "") if ch.isdigit())
+        if number:
+            phone_map[number.lstrip("0")] = employee
+    for entry in payload.get("entry", []):
+        for change in entry.get("changes", []):
+            value = change.get("value") or {}
+            for message in value.get("messages", []) or []:
+                provider_id = message.get("id")
+                sender = "".join(ch for ch in str(message.get("from") or "") if ch.isdigit()).lstrip("0")
+                if not provider_id or frappe.db.exists("Employee Hub WhatsApp Message", {"provider_message_id": provider_id}):
+                    continue
+                employee = phone_map.get(sender)
+                text_body = (message.get("text") or {}).get("body") or ""
+                if message.get("type") != "text":
+                    text_body = "[Received WhatsApp message type: " + str(message.get("type") or "unknown") + "]"
+                doc = frappe.get_doc({"doctype": "Employee Hub WhatsApp Message",
+                    "provider_message_id": provider_id, "direction": "Inbound",
+                    "sender_phone": sender, "employee": employee.get("name") if employee else None,
+                    "employee_user": employee.get("user_id") if employee else None,
+                    "employee_name": employee.get("employee_name") if employee else "Unmatched sender",
+                    "message": text_body[:4000], "provider_timestamp": message.get("timestamp"),
+                    "status": "Received" if employee else "Unmatched"})
+                doc.insert(ignore_permissions=True)
+                saved += 1
+    frappe.logger("employee_hub").info("Verified WhatsApp webhook accepted; messages stored: %s" % saved)
+    return {"ok": True, "received": bool(payload), "messages_stored": saved}
+
+@frappe.whitelist()
+def get_whatsapp_inbox(limit=100, status=None):
+    _user()
+    _require_role("HR Manager", "System Manager")
+    filters = {}
+    if status in {"Received", "Unmatched", "Handled"}:
+        filters["status"] = status
+    return frappe.get_list("Employee Hub WhatsApp Message", filters=filters,
+                           fields=["name", "employee", "employee_user", "employee_name", "sender_phone",
+                                   "message", "direction", "status", "creation", "provider_message_id"],
+                           order_by="creation desc", limit_page_length=max(1, min(int(limit), 250)))
+
+
+@frappe.whitelist()
+def mark_whatsapp_message_handled(name):
+    _user()
+    _require_role("HR Manager", "System Manager")
+    doc = frappe.get_doc("Employee Hub WhatsApp Message", name)
+    doc.status = "Handled"
+    doc.save()
+    return {"name": doc.name, "status": doc.status}
