@@ -37,10 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
         call('get_feed'), call('get_my_eod_reports'), call('get_my_tasks'),
         call('get_attendance_history'), call('get_my_leave_applications'), call('get_document_requests'), call('get_employee_directory')
       ]);
+      final inboxData = tab == 9 ? await call('get_whatsapp_inbox') as List<dynamic> : inbox;
       if (mounted) setState(() {
         posts = results[0] as List<dynamic>; reports = results[1] as List<dynamic>;
         tasks = results[2] as List<dynamic>; attendance = results[3] as List<dynamic>;
-        leaves = results[4] as List<dynamic>; documents = results[5] as List<dynamic>; employees = results[6] as List<dynamic>; if (tab == 9) inbox = await call('get_whatsapp_inbox') as List<dynamic>;
+        leaves = results[4] as List<dynamic>; documents = results[5] as List<dynamic>;
+        employees = results[6] as List<dynamic>; inbox = inboxData;
       });
     } catch (e) { if (mounted) setState(() { error = e.toString(); }); }
     finally { if (mounted) setState(() { busy = false; }); }
