@@ -31,7 +31,7 @@ This is an employee operations foundation built on ERPNext's existing Employee, 
 Use a clean, supported Frappe + ERPNext + HRMS bench and a dedicated test site. The checked-in `erpnext-develop/` directory is an upstream source snapshot, not a running installation and not the installed app root. The custom Frappe app lives at the repository root. `hooks.py` declares `erpnext` and `hrms` as required apps so an incomplete bench fails fast. Review [the integration guide](docs/ERPNext_HRMS_INTEGRATION.md) before installing.
 
 ```bash
-bench get-app https://github.com/alienhousenetworks/employee-managemnt.git --branch feat/employee-hub-backend-frontend-flutter
+bench get-app alienhouse_employee_hub https://github.com/alienhousenetworks/employee-managemnt.git --branch feat/employee-hub-backend-frontend-flutter
 bench --site your-staging-site list-apps  # verify frappe, erpnext and hrms are installed first
 bench --site your-staging-site install-app alienhouse_employee_hub
 bench --site your-staging-site migrate
