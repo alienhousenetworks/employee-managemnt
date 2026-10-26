@@ -11,8 +11,8 @@ An ERPNext/Frappe-backed employee operations app with a responsive React web cli
 - **Leave:** leave application submission and HR review endpoint.
 - **Tasks:** create/assign tasks, list assigned/open tasks and update task status.
 - **Documents:** employee document requests, HR status updates and attachment reference.
-- **AI work assistant:** configured OpenAI-compatible chat-completions endpoint for drafting/summarisation; returns NOT_CONFIGURED rather than fabricating an answer.
-- **WhatsApp Business:** outbound Cloud API text messages; signed webhook verification; incoming messages persisted to an HR inbox and matched against active Employee cell numbers; unmatched numbers are flagged for manual review.
+- **AI work assistant:** configured OpenAI-compatible chat-completions endpoint with a drafting agent and independent safety/evidence review agent; returns NOT_CONFIGURED rather than fabricating an answer and marks output for human review.
+- **WhatsApp Business:** outbound Cloud API text messages by Employee record; signed webhook verification; incoming messages persisted to an HR inbox and matched against active Employee cell numbers; unmatched numbers are flagged for manual review. Configure a currently supported Meta Graph API version.
 - **Dashboards:** user-level activity counts (not misleading company-wide totals).
 
 This is an employee operations foundation built on ERPNext's existing Employee, Employee Checkin, Attendance, Leave Application, Task, ToDo and File records. It is not a replacement for ERPNext payroll, statutory compliance, a full document-template engine, or a complete autonomous HR platform.
@@ -21,7 +21,7 @@ This is an employee operations foundation built on ERPNext's existing Employee, 
 
 - `alienhouse_employee_hub/`: custom Frappe app, APIs, DocTypes and tests.
 - `web/`: React + TypeScript + Vite.
-- `mobile/employee_hub_app/`: Flutter client.
+- `mobile/employee_hub_app/`: Flutter client with committed Android and iOS platform runners.
 - `erpnext-develop/`: upstream ERPNext source snapshot; it is not the custom app.
 - `.github/workflows/employee-hub-ci.yml`: web, Flutter and Python syntax CI.
 
@@ -64,7 +64,7 @@ flutter test
 flutter run
 ```
 
-Platform runner files are generated in the development/CI environment rather than committed in this starter. Before release, configure app IDs, signing, app icons, secure session storage, privacy disclosures and platform permissions. The current client holds the session cookie in memory and only saves site URL/username preferences; verify session expiry and logout behavior on target devices.
+Android and iOS runner files are committed. Before release, replace the example application ID, configure signing, app icons, secure session storage, privacy disclosures and platform permissions. Android debug APK builds are exercised in CI; iOS compilation/signing still requires a macOS runner. The current client holds the session cookie in memory and only saves site URL/username preferences; verify session expiry and logout behavior on target devices.
 
 ## Configure AI and WhatsApp on the server
 
@@ -88,6 +88,7 @@ WhatsApp Cloud API example:
 {
   "employee_hub_whatsapp": {
     "phone_number_id": "YOUR-META-PHONE-NUMBER-ID",
+    "graph_api_version": "v23.0",
     "access_token": "SET-SECRET-OUTSIDE-GIT",
     "app_secret": "YOUR-META-APP-SECRET",
     "verify_token": "YOUR-RANDOM-WEBHOOK-VERIFY-TOKEN"
@@ -109,7 +110,7 @@ Configure the Meta webhook callback as `https://YOUR-ERP-HOST/api/method/alienho
 
 ## CI and release gates
 
-GitHub Actions runs the web TypeScript/Vite build, Flutter formatting/analyzer/widget test, and Python syntax compilation. These CI checks are not a substitute for testing on a real supported Frappe/ERPNext site.
+GitHub Actions runs the web TypeScript/Vite build, Flutter formatting/analyzer/widget test, Android debug APK build, and Python syntax compilation. Platform runner generation is retained in Git. These CI checks are not a substitute for testing on a real supported Frappe/ERPNext site.
 
 Before production:
 1. Run migrations and Frappe tests on a disposable staging site.
