@@ -134,12 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
           metric('Attendance records', attendance.length), metric('Leave requests', leaves.length), metric('Document requests', documents.length),
           const Text('These are returned-record counts, not company-wide totals.', style: TextStyle(fontSize: 11))
         ])),
-        if (tab == 8) ...[panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Employee directory', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),const Text('Directory fields depend on your ERPNext role.'),const SizedBox(height: 8),rows(employees, ['employee_name','department','designation','status'])]))],\n        if (tab == 9) ...[panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('WhatsApp Business', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),field('Recipient phone number (international format)',waTo),field('Message',waMessage,lines:3),FilledButton(onPressed:()=>act('send_whatsapp_message',{'to':waTo.text,'message':waMessage.text},success:'WhatsApp provider request processed.'),child:const Text('Send message')),const Text('HR/System Manager only. Provider configuration is required.',style:TextStyle(fontSize:11))])),rows(inbox, ['employee_name','sender_phone','message','status','creation'])],\n        if (tab == 7) ...[
+        if (tab == 8) ...[panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Employee directory', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),const Text('Directory fields depend on your ERPNext role.'),const SizedBox(height: 8),rows(employees, ['employee_name','department','designation','status'])]))],
+        if (tab == 9) ...[panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('WhatsApp Business', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),field('Recipient phone number (international format)',waTo),field('Message',waMessage,lines:3),FilledButton(onPressed:()=>act('send_whatsapp_message',{'to':waTo.text,'message':waMessage.text},success:'WhatsApp provider request processed.'),child:const Text('Send message')),const Text('HR/System Manager only. Provider configuration is required.',style:TextStyle(fontSize:11))])),rows(inbox, ['employee_name','sender_phone','message','status','creation'])],
+        if (tab == 7) ...[
           panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text('Human-in-the-loop work assistant', style: TextStyle(fontWeight: FontWeight.bold)),
             field('Request', aiPrompt, lines: 3), field('Context (avoid unnecessary sensitive data)', aiContext, lines: 4),
             FilledButton(onPressed:() async {
-              try { final r = await call('ai_work_assistant', {'task':aiPrompt.text,'context':aiContext.text}); setState(()=>aiResult=r['answer'] != null ? 'DRAFT\\n${r['answer']}\\n\\nINDEPENDENT SAFETY REVIEW\\n${r['review'] ?? 'Not provided'}\\n\\nHuman review is required before use.' : (r['message']??'AI status: ${r['status']}').toString()); }
+              try { final r = await call('ai_work_assistant', {'task':aiPrompt.text,'context':aiContext.text}); setState(()=>aiResult=r['answer'] != null ? 'DRAFT\n${r['answer']}\n\nINDEPENDENT SAFETY REVIEW\n${r['review'] ?? 'Not provided'}\n\nHuman review is required before use.' : (r['message']??'AI status: ${r['status']}').toString()); }
               catch(e) { setState(()=>error=e.toString()); }
             }, child:const Text('Generate draft')),
             if (aiResult.isNotEmpty) Padding(padding:const EdgeInsets.only(top:14),child:Text(aiResult))
@@ -157,7 +159,8 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(icon:Icon(Icons.event_available),label:'Leave'),
           NavigationDestination(icon:Icon(Icons.folder),label:'Docs'),
           NavigationDestination(icon:Icon(Icons.insights),label:'Dashboard'),
-          NavigationDestination(icon:Icon(Icons.auto_awesome),label:'AI'),\n          NavigationDestination(icon:Icon(Icons.badge),label:'People'),\n          NavigationDestination(icon:Icon(Icons.chat),label:'WhatsApp'),
+          NavigationDestination(icon:Icon(Icons.auto_awesome),label:'AI'),
+          NavigationDestination(icon:Icon(Icons.badge),label:'People'),\n          NavigationDestination(icon:Icon(Icons.chat),label:'WhatsApp'),
         ]),
     );
   }
