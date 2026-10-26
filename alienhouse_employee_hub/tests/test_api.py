@@ -76,3 +76,10 @@ class TestEmployeeHubAPI(FrappeTestCase):
         ):
             with self.assertRaises(Exception):
                 api.set_feed_reaction(feed_post="EHF-TEST", reaction="Dislike")
+
+    def test_non_employee_role_cannot_read_feed_interactions(self):
+        with patch.object(frappe.session, "user", "visitor@example.com"), patch(
+            "frappe.get_roles", return_value=["Website User"]
+        ):
+            with self.assertRaises(frappe.PermissionError):
+                api.get_feed_interactions(feed_post="EHF-TEST")
