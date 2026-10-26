@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const Text('Human-in-the-loop work assistant', style: TextStyle(fontWeight: FontWeight.bold)),
             field('Request', aiPrompt, lines: 3), field('Context (avoid unnecessary sensitive data)', aiContext, lines: 4),
             FilledButton(onPressed:() async {
-              try { final r = await call('ai_work_assistant', {'task':aiPrompt.text,'context':aiContext.text}); setState(()=>aiResult=(r['answer']??r['message']??'AI status: ${r['status']}').toString()); }
+              try { final r = await call('ai_work_assistant', {'task':aiPrompt.text,'context':aiContext.text}); setState(()=>aiResult=r['answer'] != null ? 'DRAFT\\n${r['answer']}\\n\\nINDEPENDENT SAFETY REVIEW\\n${r['review'] ?? 'Not provided'}\\n\\nHuman review is required before use.' : (r['message']??'AI status: ${r['status']}').toString()); }
               catch(e) { setState(()=>error=e.toString()); }
             }, child:const Text('Generate draft')),
             if (aiResult.isNotEmpty) Padding(padding:const EdgeInsets.only(top:14),child:Text(aiResult))
