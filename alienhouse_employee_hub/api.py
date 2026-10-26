@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import re
 from datetime import date
 
 import frappe
@@ -440,8 +441,8 @@ def send_whatsapp_message(to, message):
     message = (message or "").strip()
     if not token or not phone_id:
         return {"status": "NOT_CONFIGURED", "message": "WhatsApp Business Cloud API is not configured."}
-    if not to or not message or len(message) > 4096:
-        frappe.throw(_("Recipient and a message of up to 4096 characters are required"))
+    if not re.fullmatch(r"\+?[1-9][0-9]{7,14}", to) or not message or len(message) > 4096:
+        frappe.throw(_("Recipient must be an international phone number and message must contain 1–4096 characters"))
     try:
         response = requests.post("https://graph.facebook.com/v20.0/" + phone_id + "/messages",
                                  headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
