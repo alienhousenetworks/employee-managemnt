@@ -109,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
               OutlinedButton(onPressed:()=>act('record_checkin', {'log_type':'OUT'}, success:'Clock-out recorded.'), child:const Text('Clock out'))
             ])
           ])),
-          rows(attendance, ['attendance_date','status','in_time','out_time','working_hours'])
+          rows(attendance, ['record_type','attendance_date','time','status','log_type','in_time','out_time','working_hours'])
         ],
         if (tab == 4) ...[
           panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
