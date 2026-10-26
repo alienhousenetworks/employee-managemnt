@@ -1,0 +1,10 @@
+web/node_modules/
+web/dist/
+web/.env.local
+mobile/employee_hub_app/.dart_tool/
+mobile/employee_hub_app/build/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example

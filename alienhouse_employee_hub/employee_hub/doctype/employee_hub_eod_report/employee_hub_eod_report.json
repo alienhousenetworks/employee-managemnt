@@ -1,0 +1,88 @@
+{
+  "doctype": "DocType",
+  "name": "Employee Hub EOD Report",
+  "module": "Employee Hub",
+  "autoname": "format:EOD-.YYYY.-.#####",
+  "title_field": "employee_user",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "employee_user",
+      "label": "Employee User",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "report_date",
+      "label": "Report Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "accomplishments",
+      "label": "Accomplishments",
+      "fieldtype": "Text Editor",
+      "reqd": 1
+    },
+    {
+      "fieldname": "blockers",
+      "label": "Blockers",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "next_day_plan",
+      "label": "Next Day Plan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "hours_worked",
+      "label": "Hours Worked",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Submitted\\nIn Review\\nApproved\\nNeeds Update",
+      "default": "Submitted",
+      "reqd": 1
+    },
+    {
+      "fieldname": "submitted_at",
+      "label": "Submitted At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "reviewer_notes",
+      "label": "Reviewer Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "Employee",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "if_owner": 1
+    },
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "delete": 1
+    },
+    {
+      "role": "HR Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "report_date",
+  "sort_order": "DESC"
+}
